@@ -9,7 +9,7 @@ import pytest
 KEY = bytes.fromhex("ab" * 32)
 
 
-def make_textured_image(h: int = 512, w: int = 512, seed: int = 7) -> np.ndarray:
+def make_textured_image(h: int = 1024, w: int = 1024, seed: int = 7) -> np.ndarray:
     """Deterministic, document-like textured RGB image (uint8 HxWx3).
 
     Mixes smooth gradients, sinusoidal texture, a few solid rectangles and mild

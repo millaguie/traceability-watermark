@@ -49,6 +49,21 @@ def blur(image: np.ndarray, radius: float) -> np.ndarray:
     return np.asarray(Image.fromarray(image).filter(ImageFilter.GaussianBlur(radius)))
 
 
+def messenger(image: np.ndarray, long_side: int = 320, quality: int = 80) -> np.ndarray:
+    """Simulate a messenger (Telegram/WhatsApp) "send as photo": downscale the
+    long side to a fixed cap, then re-encode JPEG. The downscale is the part our
+    bounded geometric search cannot undo — scale normalization handles it."""
+    img = Image.fromarray(image)
+    w, h = img.size
+    s = long_side / max(w, h)
+    if s < 1:
+        img = img.resize((max(1, round(w * s)), max(1, round(h * s))), Image.Resampling.LANCZOS)
+    buf = io.BytesIO()
+    img.save(buf, format="JPEG", quality=quality)
+    buf.seek(0)
+    return np.asarray(Image.open(buf).convert("RGB"))
+
+
 # Catalogue: name -> callable(image) for the harness/measurement.
 ATTACKS = {
     "jpeg_q75": lambda im: jpeg(im, 75),
@@ -60,4 +75,5 @@ ATTACKS = {
     "rotate_-2deg": lambda im: rotate(im, -2.0),
     "noise_sigma5": lambda im: gaussian_noise(im, 5.0),
     "blur_r1": lambda im: blur(im, 1.0),
+    "messenger_1280": lambda im: messenger(im, 1280, 85),
 }

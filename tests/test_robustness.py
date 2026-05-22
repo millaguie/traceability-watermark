@@ -30,6 +30,7 @@ from .attacks import (
     crop,
     gaussian_noise,
     jpeg,
+    messenger,
     rescale,
     rotate,
 )
@@ -76,7 +77,23 @@ def test_attack_recovers_and_meets_ber(name, attack, geometric, image, key):
     n = payload.payload_bits()
     bits = np.random.default_rng(0).integers(0, 2, size=n).astype(np.uint8)
     plan = build_plan(sub.prng, n)
-    marked_bits = embed.embed_bits(image, bits, sub.prng, plan=plan)
+    # Embed the known bits through the same scale-normalized pipeline that
+    # extraction undoes, so the BER is measured on a comparable signal.
+    marked_bits = api._normalized_embed(
+        image, lambda s: embed.embed_bits(s, bits, sub.prng, plan=plan)
+    )
 
     ber = _blind_ber(attack(marked_bits), bits, key, geometric)
     assert ber <= BER_TARGET, f"{name}: BER {ber:.4f} exceeds target {BER_TARGET}"
+
+
+@pytest.mark.parametrize("cap", [1280, 1024])
+def test_survives_messenger_downscale(cap, key):
+    """A large document sent 'as photo' (downscaled to a fixed cap + JPEG) by a
+    messenger still yields the authenticated id, thanks to scale normalization."""
+    from .conftest import make_textured_image
+
+    big = make_textured_image(1400, 2000)  # realistic scan, > canonical
+    marked = api.embed_image(big, ID, key)
+    attacked = messenger(marked, long_side=cap, quality=85)
+    assert api.extract_image(attacked, key) == ID

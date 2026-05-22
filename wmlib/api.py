@@ -28,18 +28,69 @@ from .keys import derive_subkeys
 from .spread import MID_BAND, MID_BAND_PUBLIC, build_plan
 from .transform import BLOCK
 
-# Geometric *corrections* tried during blind detection; they invert the bounded
-# attacks in the threat model (scale +-20%, rotation +-2deg). The FAST grid only
-# tries the boundary corrections (cheap, covers the documented attack envelope);
-# the FULL grid samples intermediate values for marginal/odd distortions.
-FAST_SCALES: tuple[float, ...] = (1.0, 1.25, 0.8333)
+# Geometric *corrections* tried during blind detection. After scale
+# normalization, pure rescaling (incl. messenger downscaling) is already undone,
+# so the residual scale to search for comes mainly from CROPPING: removing a
+# fraction f per edge and re-normalizing scales the grid by 1/(1-2f). The grid
+# below covers up to ~12% per-edge crop (scale 0.8) plus +-2deg rotation.
+FAST_SCALES: tuple[float, ...] = (1.0, 0.9, 0.8)
 FAST_ANGLES: tuple[float, ...] = (0.0, -2.0, 2.0)
-FULL_SCALES: tuple[float, ...] = (1.0, 1.25, 0.8333, 1.111, 0.9)
+FULL_SCALES: tuple[float, ...] = (1.0, 0.95, 0.9, 0.85, 0.8, 1.1, 1.25)
 FULL_ANGLES: tuple[float, ...] = (0.0, -1.0, 1.0, -2.0, 2.0)
 
 # Fixed, published PRNG key for the public contact channel: it carries no
 # secret, so anyone with the tool can locate and read it.
 PUBLIC_PRNG_KEY = hashlib.sha256(b"watermark/public/v1").digest()
+
+# Canonical long side (px) for scale normalization. Embedding and detection both
+# reference this fixed resolution, so any aspect-preserving rescaling a platform
+# applies (e.g. Telegram capping a photo to ~1280 px) cancels out — the mark is
+# tied to the canonical grid, not the native pixel count. 1024 sits below common
+# messenger caps (margin) while leaving ample carrier redundancy.
+CANONICAL_LONG_SIDE = 1024
+
+
+def _canonical_size(width: int, height: int) -> tuple[int, int]:
+    """Aspect-preserving size with the long side = CANONICAL_LONG_SIDE (mult. of 8)."""
+    s = CANONICAL_LONG_SIDE / max(width, height)
+    cw = max(BLOCK, int(round(width * s)) // BLOCK * BLOCK)
+    ch = max(BLOCK, int(round(height * s)) // BLOCK * BLOCK)
+    return cw, ch
+
+
+def _to_canonical(image_rgb: np.ndarray) -> np.ndarray:
+    """Resize an image to the canonical grid for detection."""
+    h, w = image_rgb.shape[:2]
+    cw, ch = _canonical_size(w, h)
+    return imageops.resize_rgb(image_rgb, cw, ch)
+
+
+def _normalized_embed(
+    image_rgb: np.ndarray, embed_fn: Callable[[np.ndarray], np.ndarray]
+) -> np.ndarray:
+    """Embed on the canonical grid, then carry only the watermark delta back.
+
+    ``embed_fn`` watermarks the canonical-resolution copy. We add only the
+    upsampled *delta* to the original, so the host content stays pristine (no
+    resample blur) and the mark lives on the scale-invariant canonical grid.
+    """
+    h, w = image_rgb.shape[:2]
+    cw, ch = _canonical_size(w, h)
+    small = imageops.resize_rgb(image_rgb, cw, ch)
+    marked_small = embed_fn(small)
+
+    if max(w, h) < CANONICAL_LONG_SIDE:
+        # Input smaller than canonical: we had to upscale to embed. Returning the
+        # mark at native resolution would downsample the delta and destroy the
+        # carriers, so we return at canonical resolution instead (the output is
+        # larger than the input — documented behavior for small inputs).
+        return marked_small
+
+    # Input >= canonical: carry only the watermark delta back to the native
+    # resolution, leaving the host content untouched (no resample blur).
+    delta = marked_small.astype(np.float32) - small.astype(np.float32)
+    delta_full = imageops.resize_delta(delta, w, h)
+    return np.clip(image_rgb.astype(np.float32) + delta_full, 0, 255).astype(np.uint8)
 
 
 @dataclass
@@ -51,19 +102,20 @@ class SearchSpec:
     the exhaustive search for the rare case the fast one misses a mark.
     """
 
-    scales: tuple[float, ...] = FULL_SCALES
-    angles: tuple[float, ...] = FULL_ANGLES
-    # Rotation/scale resync is expensive; OFF by default. The default still
-    # recovers no-attack, JPEG, cropping, noise, blur and un-rotated screenshots
-    # (those need only translation sync). Turn it ON for rotated/rescaled copies.
-    geometric: bool = False
+    scales: tuple[float, ...] = FAST_SCALES
+    angles: tuple[float, ...] = FAST_ANGLES
+    # Whether to search rotation/scale at all. The default grid is cheap because
+    # detection always runs on the canonical (<=1024 px) image, so it is on by
+    # default and covers scale, ~10% cropping (which normalization turns into a
+    # scale) and +-2deg rotation. Set False for an identity-only fast path.
+    geometric: bool = True
     # Sub-block pixel-origin search step. Must stay 1: cropping shifts the block
     # grid by an arbitrary 0-7px, and a coarser step misses those offsets.
     pixel_step: int = 1
 
     @classmethod
     def full(cls) -> "SearchSpec":
-        """Exhaustive search incl. rotation/scale resync (slow; for distorted copies)."""
+        """Exhaustive search: the dense rotation/scale grid (for awkward distortions)."""
         return cls(scales=FULL_SCALES, angles=FULL_ANGLES, geometric=True, pixel_step=1)
 
 
@@ -90,12 +142,20 @@ def embed_image(
     band (equivalent to calling :func:`embed_contact` afterwards).
     """
     sub = derive_subkeys(master_key)
-    codeword = payload.encode_payload(recipient_id, sub.enc)
-    bits = payload.bytes_to_bits(codeword)
-    marked = _embed.embed_bits(image_rgb, bits, sub.prng, alpha=alpha, band=MID_BAND)
-    if contact is not None:
-        marked = embed_contact(marked, contact, alpha=alpha)
-    return marked
+    fbits = payload.bytes_to_bits(payload.encode_payload(recipient_id, sub.enc))
+    cbits = (
+        payload_public.bytes_to_bits(payload_public.encode_contact(contact))
+        if contact is not None
+        else None
+    )
+
+    def _mark(small: np.ndarray) -> np.ndarray:
+        m = _embed.embed_bits(small, fbits, sub.prng, alpha=alpha, band=MID_BAND)
+        if cbits is not None:
+            m = _embed.embed_bits(m, cbits, PUBLIC_PRNG_KEY, alpha=alpha, band=MID_BAND_PUBLIC)
+        return m
+
+    return _normalized_embed(image_rgb, _mark)
 
 
 def _search_decode(
@@ -148,7 +208,7 @@ def extract_image(
     sub = derive_subkeys(master_key)
     plan = build_plan(sub.prng, payload.payload_bits(), len(MID_BAND))
     return _search_decode(
-        image_rgb, plan, MID_BAND,
+        _to_canonical(image_rgb), plan, MID_BAND,
         lambda cw: payload.decode_payload(cw, sub.enc),
         payload.PayloadError, search,
     )
@@ -159,10 +219,10 @@ def extract_image(
 # --------------------------------------------------------------------------- #
 def embed_contact(image_rgb: np.ndarray, contact: str, *, alpha: float = 7.0) -> np.ndarray:
     """Embed the public, unencrypted contact mark on the public band."""
-    cw = payload_public.encode_contact(contact)
-    bits = payload_public.bytes_to_bits(cw)
-    return _embed.embed_bits(
-        image_rgb, bits, PUBLIC_PRNG_KEY, alpha=alpha, band=MID_BAND_PUBLIC
+    bits = payload_public.bytes_to_bits(payload_public.encode_contact(contact))
+    return _normalized_embed(
+        image_rgb,
+        lambda s: _embed.embed_bits(s, bits, PUBLIC_PRNG_KEY, alpha=alpha, band=MID_BAND_PUBLIC),
     )
 
 
@@ -173,7 +233,7 @@ def extract_contact(
     search = search or SearchSpec()
     plan = build_plan(PUBLIC_PRNG_KEY, payload_public.payload_bits(), len(MID_BAND_PUBLIC))
     return _search_decode(
-        image_rgb, plan, MID_BAND_PUBLIC,
+        _to_canonical(image_rgb), plan, MID_BAND_PUBLIC,
         payload_public.decode_contact, payload_public.PublicPayloadError, search,
     )
 
@@ -200,6 +260,7 @@ def recover_bits(
     key = prng_key if prng_key is not None else derive_subkeys(master_key).prng
     bits = n_bits if n_bits is not None else payload.payload_bits()
     plan = build_plan(key, bits, len(band))
+    image_rgb = _to_canonical(image_rgb)
 
     best_votes = np.zeros(plan.n_bits)
     best_score = -1.0

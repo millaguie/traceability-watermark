@@ -19,6 +19,13 @@ coexist in one image without interfering.
 > luminance channel, carrying an AES-256-GCM-encrypted payload protected by
 > Reed–Solomon error correction.
 
+## How it works
+
+For a deep dive into each technique — spread-spectrum embedding, block-DCT,
+blind detection, geometric resync, perceptual masking, Reed–Solomon, AES-GCM,
+HKDF, the payload format, PDF flattening and the visible mode — with links to
+the relevant papers, see [doc/](doc/README.md).
+
 ## Install
 
 ### With pipx (recommended)
@@ -81,10 +88,10 @@ watermark verify leaked.jpg --id "banco-x-2026-05"
 watermark embed dni.png --visible --text "Shared with Bank X"
 ```
 
-`extract`/`verify`/`contact` use a fast search by default (recovers JPEG,
-cropping, noise, blur, un-rotated screenshots). If that finds nothing and the
-copy may have been **rotated or rescaled**, add `--full` to also search
-rotation/scale (much slower).
+`extract`/`verify`/`contact` search a small scale/rotation grid by default
+(covers JPEG, ~±20% scale, ~10% cropping, ±2° rotation, noise, blur and
+messenger downscaling). If a copy is distorted beyond that and nothing is found,
+add `--full` for a denser (slower) search.
 
 ## Public contact mark ("if found, contact ...")
 
@@ -123,6 +130,12 @@ these bounds:
 - cropping ≤ 10% per edge
 - rotation ±2°
 - additive noise / mild blur
+- **messenger / social re-processing** — being sent as a photo through Telegram,
+  WhatsApp, etc., which downscales to a fixed size (e.g. ~1280 px) and
+  re-compresses. Handled by scale normalization
+  ([doc/scale-invariance.md](doc/scale-invariance.md)); recovers down to ~0.4×
+  the embedded size. For the most sensitive files, prefer sending **"as file"**
+  (lossless) — then nothing degrades the mark.
 
 Measured robustness on a textured test image (see `tools/measure_robustness.py`
 and `tests/test_robustness.py`): **all of the above recover the authenticated
