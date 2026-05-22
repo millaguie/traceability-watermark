@@ -1,0 +1,41 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "traceability-watermark"
+version = "0.1.0"
+description = "Robust, invisible, authenticated traceability watermark for images and PDFs"
+readme = "README.md"
+requires-python = ">=3.10"
+license = "AGPL-3.0-or-later"
+license-files = ["LICENSE"]
+classifiers = [
+    "License :: OSI Approved :: GNU Affero General Public License v3 or later (AGPLv3+)",
+]
+dependencies = [
+    "pillow>=11",
+    "pymupdf>=1.24",
+    "numpy>=2",
+    "scipy>=1.13",
+    "reedsolo>=1.7",
+    "cryptography>=42",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8",
+    "scikit-image>=0.24",
+]
+# Only for tools/compare_backends.py (benchmark vs the invisible-watermark lib).
+# Not required to run or test the tool itself.
+bench = [
+    "invisible-watermark>=0.2",
+    "opencv-python-headless>=4.9",
+]
+
+[project.scripts]
+watermark = "wmlib.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["wmlib"]
