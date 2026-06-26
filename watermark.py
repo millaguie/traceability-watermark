@@ -13,6 +13,7 @@ Delegates to the subcommand CLI in :mod:`wmlib.cli`:
 The legacy visible-mosaic helpers are re-exported here for backwards
 compatibility with existing imports.
 """
+
 from __future__ import annotations
 
 from wmlib.cli import main

@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2026 millaguie <https://www.millaguie.net/>
 """Tests for notice localization."""
+
 from __future__ import annotations
 
 from wmlib import i18n

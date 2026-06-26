@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2026 millaguie <https://www.millaguie.net/>
 """Tests for robust PDF embedding via flattening."""
+
 from __future__ import annotations
 
 import fitz
@@ -31,7 +32,9 @@ def test_embed_then_extract_recovers_id(text_pdf, tmp_path):
     from wmlib.api import SearchSpec
 
     pdf.embed_pdf(text_pdf, out, ID, KEY, dpi=150)
-    assert pdf.extract_pdf(out, KEY, dpi=150, search=SearchSpec(geometric=False)) == [ID]
+    assert pdf.extract_pdf(out, KEY, dpi=150, search=SearchSpec(geometric=False)) == [
+        ID
+    ]
 
 
 def test_flattening_drops_selectable_text(text_pdf, tmp_path):

@@ -9,6 +9,7 @@ Requirements encoded here:
     are distinct from each other and the master.
   - The secret never lives in code; everything comes from file/env/config.
 """
+
 from __future__ import annotations
 
 import stat
@@ -43,7 +44,9 @@ def test_explicit_key_file_takes_precedence(tmp_path):
     explicit.write_text(("11" * 32) + "\n")
     cfg = tmp_path / "cfg.key"
     env = {"WATERMARK_KEY": "22" * 32}
-    master = keys.load_master_key(key_file=str(explicit), config_path=cfg, env=env, warn=False)
+    master = keys.load_master_key(
+        key_file=str(explicit), config_path=cfg, env=env, warn=False
+    )
     assert master == bytes.fromhex("11" * 32)
 
 

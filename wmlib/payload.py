@@ -18,6 +18,7 @@ is *rejected* rather than returning a forged or garbage identifier.
 The fixed codeword length lets the embedding layer repeat a constant-size code
 across the document, which is what makes cropping survivable.
 """
+
 from __future__ import annotations
 
 import os
@@ -67,9 +68,7 @@ def encode_payload(recipient_id: str, enc_key: bytes) -> bytes:
     """
     raw = recipient_id.encode("utf-8")
     if len(raw) > MAX_ID_BYTES:
-        raise ValueError(
-            f"recipient id is {len(raw)} bytes; max is {MAX_ID_BYTES}"
-        )
+        raise ValueError(f"recipient id is {len(raw)} bytes; max is {MAX_ID_BYTES}")
 
     block = bytes([len(raw)]) + raw + b"\x00" * (MAX_ID_BYTES - len(raw))
     nonce = os.urandom(NONCE_BYTES)

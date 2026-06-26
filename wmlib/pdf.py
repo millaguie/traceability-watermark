@@ -11,6 +11,7 @@ Trade-off (documented for the user): the original selectable/searchable text is
 lost — every page becomes an image. That is the price of leaving no separable
 original layer underneath the mark.
 """
+
 from __future__ import annotations
 
 import io
@@ -47,8 +48,12 @@ def _draw_notice(page: "fitz.Page", text: str) -> None:
     shape.commit()
 
     page.insert_textbox(
-        band, text, fontsize=fontsize, fontname="helv",
-        color=(1, 1, 1), align=fitz.TEXT_ALIGN_CENTER,
+        band,
+        text,
+        fontsize=fontsize,
+        fontname="helv",
+        color=(1, 1, 1),
+        align=fitz.TEXT_ALIGN_CENTER,
     )
 
 
@@ -73,7 +78,9 @@ def embed_pdf(
     try:
         for page in src:
             rgb = _page_to_rgb(page, dpi)
-            marked = api.embed_image(rgb, recipient_id, master_key, alpha=alpha, contact=contact)
+            marked = api.embed_image(
+                rgb, recipient_id, master_key, alpha=alpha, contact=contact
+            )
 
             buf = io.BytesIO()
             Image.fromarray(marked).save(buf, format="PNG")
@@ -115,6 +122,8 @@ def extract_contact_pdf(
     """Extract the public contact string from each page (no key needed)."""
     doc = fitz.open(input_path)
     try:
-        return [api.extract_contact(_page_to_rgb(page, dpi), search=search) for page in doc]
+        return [
+            api.extract_contact(_page_to_rgb(page, dpi), search=search) for page in doc
+        ]
     finally:
         doc.close()

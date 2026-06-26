@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2026 millaguie <https://www.millaguie.net/>
 """Tests for the subcommand CLI (embed / extract / verify + visible)."""
+
 from __future__ import annotations
 
 import numpy as np
@@ -61,7 +62,9 @@ def test_embed_requires_id_or_visible(tmp_path, capsys):
 def test_visible_mode_warns_and_stamps(tmp_path, capsys):
     src = _write_image(tmp_path / "in.png")
     out = str(tmp_path / "stamp.png")
-    rc = cli.main(["embed", src, "--visible", "--text", "Shared with Ana", "-o", out, "--no-date"])
+    rc = cli.main(
+        ["embed", src, "--visible", "--text", "Shared with Ana", "-o", out, "--no-date"]
+    )
     assert rc == 0
     assert "DETERRENT ONLY" in capsys.readouterr().err
     # The visible stamp visibly changes the image.
@@ -77,7 +80,20 @@ def test_embed_with_contact_then_read_without_key(tmp_path, capsys):
     src = _write_image(tmp_path / "in.png")
     out = str(tmp_path / "out.png")
     key = _key_file(tmp_path)
-    rc = cli.main(["embed", src, "--id", ID, "--contact", "found@x.io", "-o", out, "--key-file", key])
+    rc = cli.main(
+        [
+            "embed",
+            src,
+            "--id",
+            ID,
+            "--contact",
+            "found@x.io",
+            "-o",
+            out,
+            "--key-file",
+            key,
+        ]
+    )
     assert rc == 0
     capsys.readouterr()
     # The `contact` subcommand needs no --key-file.
@@ -94,11 +110,26 @@ def test_notice_lang_flag_stamps_localized(tmp_path):
     src = _write_image(tmp_path / "in.png")
     out = str(tmp_path / "out.png")
     key = _key_file(tmp_path)
-    rc = cli.main(["embed", src, "--id", ID, "--notice", "--lang", "es_ES", "-o", out, "--key-file", key])
+    rc = cli.main(
+        [
+            "embed",
+            src,
+            "--id",
+            ID,
+            "--notice",
+            "--lang",
+            "es_ES",
+            "-o",
+            out,
+            "--key-file",
+            key,
+        ]
+    )
     assert rc == 0
     # The notice landed (footer band darkens the bottom rows).
     import numpy as np
     from PIL import Image
+
     a = np.asarray(Image.open(out))
     assert a[-10:].mean() < a[:10].mean()
 
@@ -106,6 +137,20 @@ def test_notice_lang_flag_stamps_localized(tmp_path):
 def test_unknown_lang_warns_but_succeeds(tmp_path, capsys):
     src = _write_image(tmp_path / "in.png")
     key = _key_file(tmp_path)
-    rc = cli.main(["embed", src, "--id", ID, "--notice", "--lang", "zz", "-o", str(tmp_path / "o.png"), "--key-file", key])
+    rc = cli.main(
+        [
+            "embed",
+            src,
+            "--id",
+            ID,
+            "--notice",
+            "--lang",
+            "zz",
+            "-o",
+            str(tmp_path / "o.png"),
+            "--key-file",
+            key,
+        ]
+    )
     assert rc == 0
     assert "not available" in capsys.readouterr().err

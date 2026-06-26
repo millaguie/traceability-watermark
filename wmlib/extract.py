@@ -15,6 +15,7 @@ operation over a TILE x TILE x n_slots array, independent of image size.
 
 The geometric (rotation/scale) part of the search is driven by :mod:`wmlib.api`.
 """
+
 from __future__ import annotations
 
 import numpy as np
@@ -46,7 +47,9 @@ def _phase_selector(n: int, period: int) -> np.ndarray:
     return sel
 
 
-def phase_sums(coeffs: np.ndarray, band: tuple[tuple[int, int], ...] = MID_BAND) -> np.ndarray:
+def phase_sums(
+    coeffs: np.ndarray, band: tuple[tuple[int, int], ...] = MID_BAND
+) -> np.ndarray:
     """Pool carrier coefficients into TILE x TILE phase bins, per slot.
 
     Returns an array of shape (TILE, TILE, n_slots). ``S[a, b, s]`` is the sum
@@ -62,7 +65,9 @@ def phase_sums(coeffs: np.ndarray, band: tuple[tuple[int, int], ...] = MID_BAND)
     return sums
 
 
-def vote_from_phase(sums: np.ndarray, plan: CarrierPlan, offset: tuple[int, int]) -> np.ndarray:
+def vote_from_phase(
+    sums: np.ndarray, plan: CarrierPlan, offset: tuple[int, int]
+) -> np.ndarray:
     """Votes per payload bit for a tile ``offset``, from pooled phase sums."""
     dr, dc = offset
     chip = np.roll(plan.chip, shift=(-dr, -dc), axis=(0, 1))  # (T, T, n_slots)
@@ -97,7 +102,9 @@ def votes_to_bits(votes: np.ndarray) -> np.ndarray:
 
 
 def vote(
-    coeffs: np.ndarray, plan: CarrierPlan, offset: tuple[int, int],
+    coeffs: np.ndarray,
+    plan: CarrierPlan,
+    offset: tuple[int, int],
     band: tuple[tuple[int, int], ...] = MID_BAND,
 ) -> np.ndarray:
     """Reference (non-pooled) vote for a single tile offset. Used in tests."""
@@ -106,5 +113,7 @@ def vote(
     votes = np.zeros(plan.n_bits)
     for slot, (pr, pc) in enumerate(band):
         contrib = (chip_map[..., slot] * coeffs[:, :, pr, pc]).ravel()
-        votes += np.bincount(bit_map[..., slot].ravel(), weights=contrib, minlength=plan.n_bits)
+        votes += np.bincount(
+            bit_map[..., slot].ravel(), weights=contrib, minlength=plan.n_bits
+        )
     return votes

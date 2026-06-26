@@ -17,6 +17,7 @@ Two independent subkeys are derived from the master with HKDF-SHA256:
   * ``prng`` — drives coefficient selection, PN sequences and tiling,
   * ``enc``  — the AES-256-GCM key protecting the payload.
 """
+
 from __future__ import annotations
 
 import os

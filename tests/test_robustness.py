@@ -16,6 +16,7 @@ this test fails and the number is reported rather than the threshold relaxed.
 Geometric attacks need a rotation/scale resync search and are marked ``slow``;
 run the fast subset with ``pytest -m "not slow"``.
 """
+
 from __future__ import annotations
 
 import numpy as np
@@ -52,7 +53,9 @@ CASES = [
 ]
 
 
-def _blind_ber(attacked: np.ndarray, known_bits: np.ndarray, key: bytes, geometric: bool) -> float:
+def _blind_ber(
+    attacked: np.ndarray, known_bits: np.ndarray, key: bytes, geometric: bool
+) -> float:
     spec = api.SearchSpec.full() if geometric else api.SearchSpec()
     recovered = api.recover_bits(attacked, key, search=spec)
     return float(np.mean(recovered != known_bits))

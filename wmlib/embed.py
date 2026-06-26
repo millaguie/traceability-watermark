@@ -6,6 +6,7 @@ Operates purely on bits: the payload codec (:mod:`wmlib.payload`) and key
 handling (:mod:`wmlib.keys`) live elsewhere. This keeps the signal-processing
 core independently testable.
 """
+
 from __future__ import annotations
 
 import numpy as np

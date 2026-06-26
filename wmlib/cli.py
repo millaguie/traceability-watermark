@@ -12,6 +12,7 @@ The robust mark is invisible, keyed, authenticated and survives recompression,
 mild scaling/rotation and cropping. The ``--visible`` mosaic is a DETERRENT
 only and is reversible — see :mod:`wmlib.visible`.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -49,7 +50,9 @@ def _cmd_embed(args) -> int:
             print("error: --visible requires --text", file=sys.stderr)
             return 1
         print(_DETERRENT_NOTE, file=sys.stderr)
-        text = args.text if args.no_date else f"{args.text} · {date.today().isoformat()}"
+        text = (
+            args.text if args.no_date else f"{args.text} · {date.today().isoformat()}"
+        )
         out = args.output or _default_output(args.input, "_stamped")
         visible.stamp(args.input, out, text)
         print(f"visible stamp applied -> {out}")
@@ -87,11 +90,19 @@ def _cmd_embed(args) -> int:
             file=sys.stderr,
         )
         pdf.embed_pdf(
-            args.input, out, args.id, key,
-            dpi=args.dpi, alpha=args.alpha, contact=contact, notice=notice,
+            args.input,
+            out,
+            args.id,
+            key,
+            dpi=args.dpi,
+            alpha=args.alpha,
+            contact=contact,
+            notice=notice,
         )
     else:
-        marked = api.embed_image(load_rgb(args.input), args.id, key, alpha=args.alpha, contact=contact)
+        marked = api.embed_image(
+            load_rgb(args.input), args.id, key, alpha=args.alpha, contact=contact
+        )
         if notice:
             marked = visible.add_notice(marked, notice)
         save_rgb(marked, out)
@@ -175,7 +186,10 @@ def _cmd_verify(args) -> int:
     spec = _search_spec(args)
 
     if _is_pdf(args.input):
-        found = any(r == args.id for r in pdf.extract_pdf(args.input, key, dpi=args.dpi, search=spec))
+        found = any(
+            r == args.id
+            for r in pdf.extract_pdf(args.input, key, dpi=args.dpi, search=spec)
+        )
     else:
         found = api.extract_image(load_rgb(args.input), key, search=spec) == args.id
 
@@ -203,39 +217,59 @@ def build_parser() -> argparse.ArgumentParser:
 
     e = sub.add_parser("embed", help="embed a watermark")
     e.add_argument("input", help="input image or PDF")
-    e.add_argument("-o", "--output", help="output path (default: <name>_watermarked.<ext>)")
-    e.add_argument("--id", help="recipient identifier for the robust invisible mark")
-    e.add_argument("--alpha", type=float, default=7.0, help="embedding strength (default: 7.0)")
-    e.add_argument("--dpi", type=int, default=pdf.DEFAULT_DPI, help="raster DPI for PDFs")
     e.add_argument(
-        "--visible", action="store_true",
+        "-o", "--output", help="output path (default: <name>_watermarked.<ext>)"
+    )
+    e.add_argument("--id", help="recipient identifier for the robust invisible mark")
+    e.add_argument(
+        "--alpha", type=float, default=7.0, help="embedding strength (default: 7.0)"
+    )
+    e.add_argument(
+        "--dpi", type=int, default=pdf.DEFAULT_DPI, help="raster DPI for PDFs"
+    )
+    e.add_argument(
+        "--visible",
+        action="store_true",
         help=f"use the legacy visible mosaic instead. {_DETERRENT_NOTE}",
     )
     e.add_argument("--text", help="text for --visible mode")
-    e.add_argument("--no-date", action="store_true", help="(--visible) do not append today's date")
+    e.add_argument(
+        "--no-date", action="store_true", help="(--visible) do not append today's date"
+    )
     e.add_argument(
         "--contact",
         help="public 'if found, contact' info (e.g. an email). Embedded as an "
         "unencrypted, key-less invisible mark plus a visible notice.",
     )
     e.add_argument(
-        "--notice", action="store_true",
+        "--notice",
+        action="store_true",
         help="stamp a visible 'traceability-protected document' notice (no contact needed)",
     )
     e.add_argument(
-        "--lang", default="en",
+        "--lang",
+        default="en",
         help=f"notice language (default en). Supported: {', '.join(i18n.available())}",
     )
-    e.add_argument("--notice-text", help="custom visible notice text (also adds a visible notice)")
-    e.add_argument("--no-notice", action="store_true", help="suppress the visible notice even with --contact")
+    e.add_argument(
+        "--notice-text", help="custom visible notice text (also adds a visible notice)"
+    )
+    e.add_argument(
+        "--no-notice",
+        action="store_true",
+        help="suppress the visible notice even with --contact",
+    )
     add_key(e)
     e.set_defaults(func=_cmd_embed)
 
     x = sub.add_parser("extract", help="extract the recipient id (blind)")
     x.add_argument("input", help="input image or PDF")
-    x.add_argument("--dpi", type=int, default=pdf.DEFAULT_DPI, help="raster DPI for PDFs")
     x.add_argument(
-        "--full", action="store_true",
+        "--dpi", type=int, default=pdf.DEFAULT_DPI, help="raster DPI for PDFs"
+    )
+    x.add_argument(
+        "--full",
+        action="store_true",
         help="also search rotation/scale (slow); use if a plain extract finds "
         "nothing and the copy may have been rotated or rescaled",
     )
@@ -245,15 +279,23 @@ def build_parser() -> argparse.ArgumentParser:
     v = sub.add_parser("verify", help="check whether a given id is present")
     v.add_argument("input", help="input image or PDF")
     v.add_argument("--id", required=True, help="recipient id to check for")
-    v.add_argument("--dpi", type=int, default=pdf.DEFAULT_DPI, help="raster DPI for PDFs")
-    v.add_argument("--full", action="store_true", help="also search rotation/scale (slow)")
+    v.add_argument(
+        "--dpi", type=int, default=pdf.DEFAULT_DPI, help="raster DPI for PDFs"
+    )
+    v.add_argument(
+        "--full", action="store_true", help="also search rotation/scale (slow)"
+    )
     add_key(v)
     v.set_defaults(func=_cmd_verify)
 
     c = sub.add_parser("contact", help="read the public contact mark (no key needed)")
     c.add_argument("input", help="input image or PDF")
-    c.add_argument("--dpi", type=int, default=pdf.DEFAULT_DPI, help="raster DPI for PDFs")
-    c.add_argument("--full", action="store_true", help="also search rotation/scale (slow)")
+    c.add_argument(
+        "--dpi", type=int, default=pdf.DEFAULT_DPI, help="raster DPI for PDFs"
+    )
+    c.add_argument(
+        "--full", action="store_true", help="also search rotation/scale (slow)"
+    )
     c.set_defaults(func=_cmd_contact)
 
     return p
