@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2026 millaguie <https://www.millaguie.net/>
 """Clean round-trip and imperceptibility tests for the SS watermark core."""
+
 from __future__ import annotations
 
 import numpy as np
@@ -43,7 +44,9 @@ def test_wrong_key_extracts_nothing(image, key):
     marked = api.embed_image(image, ID, key)
     other = bytes.fromhex("cd" * 32)
     # geometric=False keeps the (always-failing) negative search bounded/fast.
-    assert api.extract_image(marked, other, search=api.SearchSpec(geometric=False)) is None
+    assert (
+        api.extract_image(marked, other, search=api.SearchSpec(geometric=False)) is None
+    )
 
 
 def test_no_watermark_extracts_nothing(image, key):

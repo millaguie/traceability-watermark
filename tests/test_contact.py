@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2026 millaguie <https://www.millaguie.net/>
 """Tests for the public contact mark and its coexistence with the forensic mark."""
+
 from __future__ import annotations
 
 from skimage.metrics import structural_similarity as ssim

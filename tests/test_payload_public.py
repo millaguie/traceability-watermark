@@ -6,6 +6,7 @@ This payload is intentionally readable WITHOUT any secret: anyone with the tool
 can extract the contact info. A CRC + magic/version guards against returning
 garbage when no mark is present (there is no authentication — by design).
 """
+
 from __future__ import annotations
 
 import pytest

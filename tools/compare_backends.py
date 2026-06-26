@@ -9,6 +9,7 @@ as an alternative backend.
 
     python tools/compare_backends.py
 """
+
 from __future__ import annotations
 
 import sys
@@ -23,7 +24,6 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from imwatermark import WatermarkDecoder, WatermarkEncoder  # noqa: E402
 
 from tests.attacks import ATTACKS  # noqa: E402
-from tests.conftest import make_textured_image  # noqa: E402
 from wmlib import api, embed, payload  # noqa: E402
 from wmlib.keys import derive_subkeys  # noqa: E402
 from wmlib.spread import build_plan  # noqa: E402
@@ -96,11 +96,18 @@ def main() -> None:
 
     # Imperceptibility.
     print("== Imperceptibility (SSIM vs original) & capacity ==")
-    print(f"  ours        SSIM={ssim(image, ours_marked, channel_axis=-1):.4f}  payload={n} bits (authenticated)")
+    print(
+        f"  ours        SSIM={ssim(image, ours_marked, channel_axis=-1):.4f}  payload={n} bits (authenticated)"
+    )
     for mth in iw_methods:
-        print(f"  {mth:<11} SSIM={ssim(image, iw_marked[mth], channel_axis=-1):.4f}  payload={len(iw_bits)} bits (raw)")
+        print(
+            f"  {mth:<11} SSIM={ssim(image, iw_marked[mth], channel_axis=-1):.4f}  payload={len(iw_bits)} bits (raw)"
+        )
 
-    print(f"\n== Embed time ==  ours={ours_embed_t*1000:.0f}ms  " + "  ".join(f"{m}={iw_embed_t[m]*1000:.0f}ms" for m in iw_methods))
+    print(
+        f"\n== Embed time ==  ours={ours_embed_t * 1000:.0f}ms  "
+        + "  ".join(f"{m}={iw_embed_t[m] * 1000:.0f}ms" for m in iw_methods)
+    )
 
     # Robustness.
     geo = {"scale_0.8", "scale_1.2", "rotate_+2deg", "rotate_-2deg"}
@@ -111,7 +118,7 @@ def main() -> None:
         our_b = ours_ber(attack(ours_marked), our_bits, geometric=name in geo)
         row = f"{name:<14}{our_b:>10.4f}"
         for mth in iw_methods:
-            row += f"{iw_ber(attack(iw_marked[mth]), iw_bits, mth):>{10 if mth=='dwtDct' else 12}.4f}"
+            row += f"{iw_ber(attack(iw_marked[mth]), iw_bits, mth):>{10 if mth == 'dwtDct' else 12}.4f}"
         print(row)
 
 

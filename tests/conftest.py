@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2026 millaguie <https://www.millaguie.net/>
 """Shared fixtures and helpers for watermark tests."""
+
 from __future__ import annotations
 
 import numpy as np

@@ -16,6 +16,7 @@ across the whole image. That periodicity gives two things:
   * resynchronization — a translation can be recovered by trying the TILE x TILE
     candidate offsets (see :mod:`wmlib.extract`).
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -55,7 +56,9 @@ def _rng(prng_key: bytes) -> np.random.Generator:
     return np.random.default_rng(seed)
 
 
-def build_plan(prng_key: bytes, n_bits: int, n_slots: int = len(MID_BAND)) -> CarrierPlan:
+def build_plan(
+    prng_key: bytes, n_bits: int, n_slots: int = len(MID_BAND)
+) -> CarrierPlan:
     """Build the carrier plan for ``n_bits`` payload bits over ``n_slots`` carriers/block.
 
     Carriers are assigned to bits as evenly as possible, then permuted, so the

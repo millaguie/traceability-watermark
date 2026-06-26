@@ -13,6 +13,7 @@ bands so they do not interfere:
   * the **public contact** mark — unencrypted "if found, contact ..." string
     readable without any key (:func:`embed_contact` / :func:`extract_contact`).
 """
+
 from __future__ import annotations
 
 import hashlib
@@ -152,7 +153,9 @@ def embed_image(
     def _mark(small: np.ndarray) -> np.ndarray:
         m = _embed.embed_bits(small, fbits, sub.prng, alpha=alpha, band=MID_BAND)
         if cbits is not None:
-            m = _embed.embed_bits(m, cbits, PUBLIC_PRNG_KEY, alpha=alpha, band=MID_BAND_PUBLIC)
+            m = _embed.embed_bits(
+                m, cbits, PUBLIC_PRNG_KEY, alpha=alpha, band=MID_BAND_PUBLIC
+            )
         return m
 
     return _normalized_embed(image_rgb, _mark)
@@ -208,21 +211,28 @@ def extract_image(
     sub = derive_subkeys(master_key)
     plan = build_plan(sub.prng, payload.payload_bits(), len(MID_BAND))
     return _search_decode(
-        _to_canonical(image_rgb), plan, MID_BAND,
+        _to_canonical(image_rgb),
+        plan,
+        MID_BAND,
         lambda cw: payload.decode_payload(cw, sub.enc),
-        payload.PayloadError, search,
+        payload.PayloadError,
+        search,
     )
 
 
 # --------------------------------------------------------------------------- #
 # Public contact mark (unencrypted, key-less)
 # --------------------------------------------------------------------------- #
-def embed_contact(image_rgb: np.ndarray, contact: str, *, alpha: float = 7.0) -> np.ndarray:
+def embed_contact(
+    image_rgb: np.ndarray, contact: str, *, alpha: float = 7.0
+) -> np.ndarray:
     """Embed the public, unencrypted contact mark on the public band."""
     bits = payload_public.bytes_to_bits(payload_public.encode_contact(contact))
     return _normalized_embed(
         image_rgb,
-        lambda s: _embed.embed_bits(s, bits, PUBLIC_PRNG_KEY, alpha=alpha, band=MID_BAND_PUBLIC),
+        lambda s: _embed.embed_bits(
+            s, bits, PUBLIC_PRNG_KEY, alpha=alpha, band=MID_BAND_PUBLIC
+        ),
     )
 
 
@@ -231,10 +241,16 @@ def extract_contact(
 ) -> str | None:
     """Blindly extract the public contact string (no key needed), or None."""
     search = search or SearchSpec()
-    plan = build_plan(PUBLIC_PRNG_KEY, payload_public.payload_bits(), len(MID_BAND_PUBLIC))
+    plan = build_plan(
+        PUBLIC_PRNG_KEY, payload_public.payload_bits(), len(MID_BAND_PUBLIC)
+    )
     return _search_decode(
-        _to_canonical(image_rgb), plan, MID_BAND_PUBLIC,
-        payload_public.decode_contact, payload_public.PublicPayloadError, search,
+        _to_canonical(image_rgb),
+        plan,
+        MID_BAND_PUBLIC,
+        payload_public.decode_contact,
+        payload_public.PublicPayloadError,
+        search,
     )
 
 

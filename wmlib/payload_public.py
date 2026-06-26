@@ -17,6 +17,7 @@ CRC + magic only guard against decoding noise into a bogus string when no mark
 is present. Do not trust this payload for anything security-relevant; the keyed
 forensic mark (:mod:`wmlib.payload`) is the trustworthy channel.
 """
+
 from __future__ import annotations
 
 import zlib

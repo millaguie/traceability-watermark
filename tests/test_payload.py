@@ -7,6 +7,7 @@ Pipeline under test (no image involved here):
 and back, tolerating a bounded number of byte errors and rejecting any
 tampering that GCM cannot authenticate.
 """
+
 from __future__ import annotations
 
 import pytest

@@ -8,6 +8,7 @@ scale-normalized pipeline, recovered with the default search.
 
     python tools/measure_robustness.py
 """
+
 from __future__ import annotations
 
 import sys
@@ -33,7 +34,11 @@ def main() -> None:
     image = make_textured_image(1400, 2000)
     sub = derive_subkeys(KEY)
 
-    bits = np.random.default_rng(0).integers(0, 2, size=payload.payload_bits()).astype(np.uint8)
+    bits = (
+        np.random.default_rng(0)
+        .integers(0, 2, size=payload.payload_bits())
+        .astype(np.uint8)
+    )
     plan = build_plan(sub.prng, payload.payload_bits())
     marked_bits = api._normalized_embed(
         image, lambda s: embed.embed_bits(s, bits, sub.prng, plan=plan)

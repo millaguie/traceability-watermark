@@ -12,6 +12,7 @@ make sharing visibly attributed, not to resist a motivated attacker.
 For traceability that resists removal, use the robust invisible mark
 (:mod:`wmlib.api` / ``embed`` without ``--visible``).
 """
+
 from __future__ import annotations
 
 import io
@@ -118,7 +119,9 @@ def add_notice(
     draw.rectangle([0, y0, w, y0 + band_h], fill=(0, 0, 0, int(bg_opacity * 255)))
     draw.text(
         ((w - tw) // 2, y0 + pad - bbox[1]),
-        text, font=font, fill=(255, 255, 255, int(opacity * 255 + 0.5 * 255)),
+        text,
+        font=font,
+        fill=(255, 255, 255, int(opacity * 255 + 0.5 * 255)),
     )
     return np.asarray(Image.alpha_composite(img, overlay).convert("RGB"))
 

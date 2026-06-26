@@ -6,6 +6,7 @@ We embed in the luminance (Y) channel of YCbCr (BT.601), in the mid-frequency
 band of 8x8 DCT blocks — the same domain JPEG operates in, which is what makes
 the mark survive recompression. All math is done in float64.
 """
+
 from __future__ import annotations
 
 import numpy as np
@@ -58,11 +59,7 @@ def to_blocks(channel: np.ndarray) -> np.ndarray:
     """Reshape an HxW (multiple of BLOCK) channel into (nby, nbx, 8, 8)."""
     h, w = channel.shape
     nby, nbx = h // BLOCK, w // BLOCK
-    return (
-        channel.reshape(nby, BLOCK, nbx, BLOCK)
-        .transpose(0, 2, 1, 3)
-        .copy()
-    )
+    return channel.reshape(nby, BLOCK, nbx, BLOCK).transpose(0, 2, 1, 3).copy()
 
 
 def from_blocks(blocks: np.ndarray) -> np.ndarray:

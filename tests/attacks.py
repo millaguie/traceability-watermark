@@ -5,6 +5,7 @@
 Each takes and returns a uint8 HxWx3 RGB array. They are deliberately the kind
 of degradations a recipient might apply before leaking a document.
 """
+
 from __future__ import annotations
 
 import io
@@ -57,7 +58,9 @@ def messenger(image: np.ndarray, long_side: int = 320, quality: int = 80) -> np.
     w, h = img.size
     s = long_side / max(w, h)
     if s < 1:
-        img = img.resize((max(1, round(w * s)), max(1, round(h * s))), Image.Resampling.LANCZOS)
+        img = img.resize(
+            (max(1, round(w * s)), max(1, round(h * s))), Image.Resampling.LANCZOS
+        )
     buf = io.BytesIO()
     img.save(buf, format="JPEG", quality=quality)
     buf.seek(0)
