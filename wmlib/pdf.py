@@ -25,13 +25,13 @@ from . import api
 DEFAULT_DPI = 200
 
 
-def _page_to_rgb(page: "fitz.Page", dpi: int) -> np.ndarray:
+def _page_to_rgb(page: fitz.Page, dpi: int) -> np.ndarray:
     pix = page.get_pixmap(dpi=dpi, colorspace=fitz.csRGB, alpha=False)
     arr = np.frombuffer(pix.samples, dtype=np.uint8).reshape(pix.height, pix.width, 3)
     return arr.copy()
 
 
-def _draw_notice(page: "fitz.Page", text: str) -> None:
+def _draw_notice(page: fitz.Page, text: str) -> None:
     """Draw the visible notice as crisp vector text (a translucent footer band).
 
     Unlike rasterizing it into the flattened page image, this stays sharp at any
@@ -99,7 +99,7 @@ def extract_pdf(
     master_key: bytes,
     *,
     dpi: int = DEFAULT_DPI,
-    search: "api.SearchSpec | None" = None,
+    search: api.SearchSpec | None = None,
 ) -> list[str | None]:
     """Extract the recipient id from each page; entry is None if none found."""
     doc = fitz.open(input_path)
@@ -117,7 +117,7 @@ def extract_contact_pdf(
     input_path: str,
     *,
     dpi: int = DEFAULT_DPI,
-    search: "api.SearchSpec | None" = None,
+    search: api.SearchSpec | None = None,
 ) -> list[str | None]:
     """Extract the public contact string from each page (no key needed)."""
     doc = fitz.open(input_path)

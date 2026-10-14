@@ -26,7 +26,7 @@ import os
 import numpy as np
 from cryptography.exceptions import InvalidTag
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
-from reedsolo import RSCodec, ReedSolomonError
+from reedsolo import ReedSolomonError, RSCodec
 
 VERSION = 1
 MAX_ID_BYTES = 32  # recipient id capacity, in UTF-8 bytes

@@ -23,7 +23,7 @@ from __future__ import annotations
 import zlib
 
 import numpy as np
-from reedsolo import RSCodec, ReedSolomonError
+from reedsolo import ReedSolomonError, RSCodec
 
 MAGIC = b"WC"  # "watermark contact"
 VERSION = 1
