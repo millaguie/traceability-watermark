@@ -51,7 +51,7 @@ def _cmd_embed(args) -> int:
             return 1
         print(_DETERRENT_NOTE, file=sys.stderr)
         text = (
-            args.text if args.no_date else f"{args.text} · {date.today().isoformat()}"  # noqa: DTZ011
+            args.text if args.no_date else f"{args.text} · {date.today().isoformat()}"
         )
         out = args.output or _default_output(args.input, "_stamped")
         visible.stamp(args.input, out, text)
