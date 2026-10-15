@@ -17,8 +17,8 @@ bands so they do not interfere:
 from __future__ import annotations
 
 import hashlib
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Callable
 
 import numpy as np
 
@@ -54,8 +54,8 @@ CANONICAL_LONG_SIDE = 1024
 def _canonical_size(width: int, height: int) -> tuple[int, int]:
     """Aspect-preserving size with the long side = CANONICAL_LONG_SIDE (mult. of 8)."""
     s = CANONICAL_LONG_SIDE / max(width, height)
-    cw = max(BLOCK, int(round(width * s)) // BLOCK * BLOCK)
-    ch = max(BLOCK, int(round(height * s)) // BLOCK * BLOCK)
+    cw = max(BLOCK, round(width * s) // BLOCK * BLOCK)
+    ch = max(BLOCK, round(height * s) // BLOCK * BLOCK)
     return cw, ch
 
 
@@ -115,7 +115,7 @@ class SearchSpec:
     pixel_step: int = 1
 
     @classmethod
-    def full(cls) -> "SearchSpec":
+    def full(cls) -> SearchSpec:
         """Exhaustive search: the dense rotation/scale grid (for awkward distortions)."""
         return cls(scales=FULL_SCALES, angles=FULL_ANGLES, geometric=True, pixel_step=1)
 

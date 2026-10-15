@@ -12,7 +12,7 @@ from __future__ import annotations
 import numpy as np
 
 from . import transform
-from .spread import CarrierPlan, MID_BAND, build_plan, tile_maps
+from .spread import MID_BAND, CarrierPlan, build_plan, tile_maps
 
 # Luminance headroom (in 0..255 units) reserved before embedding. Compressing
 # Y into [HEADROOM, 255-HEADROOM] stops bright regions from clipping at 255,

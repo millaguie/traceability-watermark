@@ -21,7 +21,7 @@ from __future__ import annotations
 import numpy as np
 
 from . import transform
-from .spread import TILE, CarrierPlan, MID_BAND, tile_maps
+from .spread import MID_BAND, TILE, CarrierPlan, tile_maps
 
 
 def block_coeffs(image_rgb: np.ndarray, origin: tuple[int, int] = (0, 0)) -> np.ndarray:

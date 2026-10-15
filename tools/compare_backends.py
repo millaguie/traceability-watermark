@@ -21,12 +21,12 @@ from skimage.metrics import structural_similarity as ssim
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from imwatermark import WatermarkDecoder, WatermarkEncoder  # noqa: E402
+from imwatermark import WatermarkDecoder, WatermarkEncoder
 
-from tests.attacks import ATTACKS  # noqa: E402
-from wmlib import api, embed, payload  # noqa: E402
-from wmlib.keys import derive_subkeys  # noqa: E402
-from wmlib.spread import build_plan  # noqa: E402
+from tests.attacks import ATTACKS
+from wmlib import api, embed, payload
+from wmlib.keys import derive_subkeys
+from wmlib.spread import build_plan
 
 KEY = bytes.fromhex("ab" * 32)
 
